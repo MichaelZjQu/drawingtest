@@ -220,3 +220,11 @@ canvas.watching {
   margin-bottom: 8px;
   font-size: 16px;
 }
+
+.timer-bar {
+  font-size: 18px;
+  text-align: center;
+  margin: 5px 0;
+  font-family: monospace;
+  letter-spacing: 2px;
+}

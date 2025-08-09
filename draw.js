@@ -103,7 +103,7 @@ function handleMessage(message) {
             
         case 'startGame':
             // Use the first player in the sorted list as the drawer
-            if (players.length >= 2) {
+            if (players.length >= 3) { // Changed from 2 to 3
                 const firstDrawer = players[0]; // Always pick the first player
                 gameState = 'originalDrawing';
                 currentDrawer = firstDrawer.id;
@@ -195,13 +195,14 @@ function sendMessage(type, data) {
 
 function startTimer(seconds, onComplete) {
     timeLeft = seconds;
-    updateTimer();
+    const totalTime = seconds;
+    updateTimerBar(timeLeft, totalTime);
     
     if (timerInterval) clearInterval(timerInterval);
     
     timerInterval = setInterval(() => {
         timeLeft--;
-        updateTimer();
+        updateTimerBar(timeLeft, totalTime);
         
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
@@ -210,11 +211,29 @@ function startTimer(seconds, onComplete) {
     }, 1000);
 }
 
-function updateTimer() {
-    const gameInstruction = document.getElementById('game-instruction');
-    if (gameInstruction) {
-        const currentText = gameInstruction.textContent.split(' - ')[0];
-        gameInstruction.textContent = `${currentText} - ${timeLeft}s`;
+function updateTimerBar(timeLeft, totalTime) {
+    const timerBar = document.getElementById('timer-bar');
+    if (!timerBar) return;
+    
+    const totalBars = 10;
+    const filledBars = Math.ceil((timeLeft / totalTime) * totalBars);
+    
+    let barString = '';
+    for (let i = 0; i < totalBars; i++) {
+        if (i < filledBars) {
+            barString += '🟩'; // Green filled bar
+        } else {
+            barString += '⬜'; // Empty bar
+        }
+    }
+    
+    timerBar.textContent = barString;
+    
+    // Hide timer bar when no time left
+    if (timeLeft <= 0) {
+        timerBar.style.display = 'none';
+    } else {
+        timerBar.style.display = 'block';
     }
 }
 
@@ -237,13 +256,15 @@ function startOriginalDrawing() {
     // Show canvas
     canvas.style.display = 'block';
     
+    // Show timer bar
+    const timerBar = document.getElementById('timer-bar');
+    if (timerBar) timerBar.style.display = 'block';
+    
     // Update UI based on role
     const gameStatus = document.getElementById('game-status');
-    const gameInstruction = document.getElementById('game-instruction');
     
     if (currentDrawer === myPlayerId) {
-        gameStatus.textContent = '✏️ You are drawing!';
-        gameInstruction.textContent = 'Draw something for others to recreate';
+        gameStatus.textContent = '✏️';
         canvas.classList.remove('watching');
         
         // Start 10 second timer for drawing
@@ -254,9 +275,7 @@ function startOriginalDrawing() {
             startViewingPhase();
         });
     } else {
-        const drawerPlayer = players.find(p => p.id === currentDrawer);
-        gameStatus.textContent = '👀 Watching';
-        gameInstruction.textContent = `${drawerPlayer?.icon || '🎨'} Player is drawing`;
+        gameStatus.textContent = '👀';
         canvas.classList.add('watching');
     }
     
@@ -270,18 +289,15 @@ function startViewingPhase() {
     gameState = 'viewing';
     
     const gameStatus = document.getElementById('game-status');
-    const gameInstruction = document.getElementById('game-instruction');
     
     // Clear current drawing and show original
     allSquibbles = [...originalDrawing];
     redraw();
     
     if (currentDrawer === myPlayerId) {
-        gameStatus.textContent = '⏳ Waiting';
-        gameInstruction.textContent = 'Others are viewing your drawing';
+        gameStatus.textContent = '⏳';
     } else {
-        gameStatus.textContent = '👁️ Study the drawing';
-        gameInstruction.textContent = 'Remember this - you\'ll recreate it';
+        gameStatus.textContent = '👁️';
     }
     
     canvas.classList.add('watching');
@@ -297,19 +313,16 @@ function startRecreatingPhase() {
     gameState = 'recreating';
     
     const gameStatus = document.getElementById('game-status');
-    const gameInstruction = document.getElementById('game-instruction');
     
     // Clear canvas for recreating
     allSquibbles = [];
     redraw();
     
     if (currentDrawer === myPlayerId) {
-        gameStatus.textContent = '⏳ Waiting';
-        gameInstruction.textContent = 'Others are recreating your drawing';
+        gameStatus.textContent = '⏳';
         canvas.classList.add('watching');
     } else {
-        gameStatus.textContent = '🎨 Your turn!';
-        gameInstruction.textContent = 'Recreate what you just saw';
+        gameStatus.textContent = '🎨';
         canvas.classList.remove('watching');
         
         // Start 10 second timer for recreating
@@ -337,9 +350,7 @@ function startRecreatingPhase() {
             
             // Update status to show waiting
             const gameStatus = document.getElementById('game-status');
-            const gameInstruction = document.getElementById('game-instruction');
-            gameStatus.textContent = '⏳ Waiting';
-            gameInstruction.textContent = 'Waiting for other players to finish...';
+            gameStatus.textContent = '⏳';
         });
     }
 }
@@ -347,8 +358,10 @@ function startRecreatingPhase() {
 function showGallery() {
     gameState = 'gallery';
     
-    // Hide canvas
+    // Hide canvas and timer
     canvas.style.display = 'none';
+    const timerBar = document.getElementById('timer-bar');
+    if (timerBar) timerBar.style.display = 'none';
     
     // Create or show gallery
     let gallery = document.getElementById('gallery');
@@ -361,24 +374,19 @@ function showGallery() {
     gallery.style.display = 'block';
     
     const gameStatus = document.getElementById('game-status');
-    const gameInstruction = document.getElementById('game-instruction');
     
     if (currentDrawer === myPlayerId) {
-        gameStatus.textContent = '🗳️ Vote for the best!';
-        gameInstruction.textContent = 'Click on the drawing that best matches yours';
+        gameStatus.textContent = '🗳️';
     } else {
-        gameStatus.textContent = '🖼️ Gallery';
-        gameInstruction.textContent = 'Waiting for the drawer to vote...';
+        gameStatus.textContent = '🖼️';
     }
     
     // Show original drawing first
     gallery.innerHTML = `
         <div class="gallery-section">
-            <h3>Original Drawing</h3>
             <canvas class="gallery-canvas original-canvas"></canvas>
         </div>
         <div class="gallery-section">
-            <h3>Recreations</h3>
             <div class="recreations-grid"></div>
         </div>
     `;
@@ -417,7 +425,7 @@ function showGallery() {
         
         recreationDiv.innerHTML = `
             <div class="recreation-label">
-                ${recreation.playerIcon} ${recreation.playerId === myPlayerId ? 'You' : 'Player'}
+                ${recreation.playerIcon}
             </div>
         `;
         recreationDiv.appendChild(recreationCanvas);
@@ -428,14 +436,11 @@ function showGallery() {
 
 function showVoteResult() {
     const gameStatus = document.getElementById('game-status');
-    const gameInstruction = document.getElementById('game-instruction');
     
     const winner = players.find(p => p.id === votedWinner);
     const winnerIcon = winner?.icon || '🎨';
-    const winnerName = votedWinner === myPlayerId ? 'You' : 'Player';
     
-    gameStatus.textContent = '🎉 Winner Chosen!';
-    gameInstruction.textContent = `${winnerIcon} ${winnerName} was voted the best recreation!`;
+    gameStatus.textContent = '🎉';
     
     // Highlight the winning recreation
     const recreationsGrid = document.querySelector('.recreations-grid');
@@ -551,12 +556,9 @@ function drawDrawingOnCanvas(ctx, drawing, targetWidth, targetHeight) {
 
 function updateWaitingDisplay() {
     const playersWaiting = document.getElementById('players-waiting');
-    const playerCount = document.getElementById('player-count');
     const startBtn = document.getElementById('start-btn');
     
-    if (!playerCount || !playersWaiting) return;
-    
-    playerCount.textContent = players.length;
+    if (!playersWaiting) return;
     
     playersWaiting.innerHTML = '';
     players.forEach(player => {
@@ -568,14 +570,13 @@ function updateWaitingDisplay() {
         
         playerDiv.innerHTML = `
             <span class="player-icon">${player.icon}</span>
-            <span>${player.id === myPlayerId ? 'You' : 'Player'}</span>
         `;
         playersWaiting.appendChild(playerDiv);
     });
     
-    // Enable start button if 2+ players
+    // Enable start button if 3+ players
     if (startBtn) {
-        startBtn.disabled = players.length < 2;
+        startBtn.disabled = players.length < 3;
     }
 }
 
@@ -583,7 +584,7 @@ function updatePlayersDisplay() {
     const playersBar = document.getElementById('players-bar');
     if (!playersBar) return;
     
-    playersBar.innerHTML = '<span>Players:</span>';
+    playersBar.innerHTML = '';
     
     players.forEach(player => {
         const playerDiv = document.createElement('div');
@@ -601,7 +602,6 @@ function updatePlayersDisplay() {
         
         playerDiv.innerHTML = `
             <span class="player-icon">${player.icon}</span>
-            <span>${player.id === myPlayerId ? 'You' : 'Player'}</span>
         `;
         playersBar.appendChild(playerDiv);
     });
@@ -645,12 +645,12 @@ document.getElementById('join-btn')?.addEventListener('click', () => {
 
 // Start game button - use predictable first drawer
 document.getElementById('start-btn')?.addEventListener('click', () => {
-    if (players.length >= 2) {
+    if (players.length >= 3) { // Changed from 2 to 3
         // Disable the button immediately to prevent double-clicks
         const startBtn = document.getElementById('start-btn');
         if (startBtn) {
             startBtn.disabled = true;
-            startBtn.textContent = 'Starting...';
+            startBtn.textContent = '⏳';
         }
         
         // Sort players by ID to ensure consistent order
