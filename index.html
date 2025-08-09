@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Drawing Game</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Icon Selection Screen -->
+  <div class="start-screen" id="start-screen">
+    <h1>🎨 Choose Your Icon</h1>
+    <div class="icon-grid">
+      <div class="icon-option" data-icon="😀">😀</div>
+      <div class="icon-option" data-icon="😎">😎</div>
+      <div class="icon-option" data-icon="🤖">🤖</div>
+      <div class="icon-option" data-icon="👾">👾</div>
+      <div class="icon-option" data-icon="🦄">🦄</div>
+      <div class="icon-option" data-icon="🐱">🐱</div>
+      <div class="icon-option" data-icon="🐶">🐶</div>
+      <div class="icon-option" data-icon="🐼">🐼</div>
+      <div class="icon-option" data-icon="🦊">🦊</div>
+      <div class="icon-option" data-icon="🐸">🐸</div>
+      <div class="icon-option" data-icon="🐙">🐙</div>
+      <div class="icon-option" data-icon="🦋">🦋</div>
+    </div>
+    <button class="join-btn" id="join-btn" disabled>Join Waiting Room</button>
+  </div>
+
+  <!-- Waiting Room Screen -->
+  <div class="waiting-screen" id="waiting-screen">
+    <h1>🕐 Waiting Room</h1>
+    <div class="players-waiting" id="players-waiting"></div>
+    <p>Players: <span id="player-count">0</span> | Need at least 2 players to start</p>
+    <button class="start-btn" id="start-btn" disabled>Start Game</button>
+  </div>
+
+  <!-- Game Screen -->
+  <div class="game-screen" id="game-screen">
+    <div class="game-header">
+      <div class="game-status" id="game-status">Game Starting...</div>
+      <div class="game-instruction" id="game-instruction">Get ready!</div>
+    </div>
+    <div class="players-bar" id="players-bar">
+      <span>Players:</span>
+    </div>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script type="module" src="draw.js"></script>
+</body>
+</html>
